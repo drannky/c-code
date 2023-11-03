@@ -1,0 +1,132 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct Word {
+    char word[20];
+    int row, col;
+    char direction;
+};
+
+void displayGrid(char **grid, int size) {
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++)
+            printf("%c ", grid[i][j]);
+        printf("\n");
+    }
+}
+
+void addWord(char **grid, struct Word words[], int *wordCount, int size) {
+    printf("Enter word: ");
+    scanf("%s", words[*wordCount].word);
+    printf("Enter direction (a for across, d for down): ");
+    scanf(" %c", &words[*wordCount].direction);
+    printf("Enter starting row and column: ");
+    scanf("%d %d", &words[*wordCount].row, &words[*wordCount].col);
+
+    int length = strlen(words[*wordCount].word);
+    for (int i = 0; i < length; i++) {
+        if (words[*wordCount].direction == 'a')
+            grid[words[*wordCount].row][words[*wordCount].col + i] = '#';
+        else if (words[*wordCount].direction == 'd')
+            grid[words[*wordCount].row + i][words[*wordCount].col] = '#';
+    }
+    (*wordCount)++;
+}
+
+void revealCorrectWords(char **grid, struct Word words[], int *solvedWords, int wordCount) {
+    for (int i = 0; i < wordCount; i++) {
+        if (solvedWords[i] == 1) {
+            int length = strlen(words[i].word);
+            for (int j = 0; j < length; j++) {
+                if (words[i].direction == 'a')
+                    grid[words[i].row][words[i].col + j] = words[i].word[j];
+                else if (words[i].direction == 'd')
+                    grid[words[i].row + j][words[i].col] = words[i].word[j];
+            }
+        }
+    }
+}
+
+int main() {
+    int size = 5;
+
+    char **crossword = (char **)malloc(size * sizeof(char *));
+    for (int i = 0; i < size; i++)
+        crossword[i] = (char *)malloc(size * sizeof(char));
+
+    struct Word wordList[20];
+    int wordCount = 0;
+
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++)
+            crossword[i][j] = ' ';
+    }
+
+    printf("Welcome to the Crossword Game!\n");
+    printf("Here is the empty crossword grid:\n");
+    displayGrid(crossword, size);
+
+    printf("\nAdd words to the crossword:\n");
+    printf("Enter 'done' when finished.\n");
+    while (1) {
+        addWord(crossword, wordList, &wordCount, size);
+        char checkDone[10];
+        printf("Enter 'done' to finish or any key to continue: ");
+        scanf("%s", checkDone);
+        if (strcmp(checkDone, "done") == 0)
+            break;
+    }
+
+    printf("\nCrossword grid with hidden words:\n");
+    displayGrid(crossword, size);
+
+    printf("\nLet's play! (Solve the words by entering the word number and the word)\n");
+    int solvedWords[20] = {0};
+    int solvedCount = 0;
+    int index;
+
+    while (solvedCount < wordCount) {
+        printf("Enter the word number to solve (or 'quit' to exit): ");
+        if (scanf("%d", &index) != 1 || index <= 0 || index > wordCount) {
+            char invalidInput[100];
+            scanf("%s", invalidInput);
+            printf("Invalid word number!\n");
+            continue;
+        }
+
+        index--;
+
+        if (solvedWords[index] == 1) {
+            printf("You've already solved this word!\n");
+            continue;
+        }
+
+        printf("Enter the word to solve: ");
+        char solveWord[20];
+        scanf("%s", solveWord);
+
+        if (strcmp(solveWord, wordList[index].word) == 0) {
+            printf("Correct! You solved: %s\n", wordList[index].word);
+            solvedWords[index] = 1;
+            solvedCount++;
+            revealCorrectWords(crossword, wordList, solvedWords, wordCount);
+            displayGrid(crossword, size);
+        } else {
+            printf("Incorrect!\n");
+        }
+
+        printf("Enter 'quit' to exit or any key to continue: ");
+        scanf("%s", solveWord);
+        if (strcmp(solveWord, "quit") == 0) {
+            printf("Thanks for playing!\n");
+            break;
+        }
+    }
+
+    for (int i = 0; i < size; i++)
+        free(crossword[i]);
+    free(crossword);
+
+    return 0;
+}
